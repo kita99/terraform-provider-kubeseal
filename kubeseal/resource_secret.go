@@ -52,12 +52,12 @@ func resourceSecret() *schema.Resource {
 func resourceSecretRead(d *schema.ResourceData, kubeConfig interface{}) error {
 	utils.Log("resourceSecretRead")
 
-    sealedSecretManifest, err := createSealedSecret(d, kubeConfig.(KubeConfig))
+    sealedSecretManifest, err := createSealedSecret(d, kubeConfig.(*KubeConfig))
     if err != nil {
         return err
     }
 
-	utils.Log(fmt.Sprintf("Sealed secret (%s) has been created"))
+	utils.Log("Sealed secret has been created")
 
 	d.SetId(utils.SHA256(sealedSecretManifest))
     d.State().Attributes["manifest"] = sealedSecretManifest
@@ -65,7 +65,7 @@ func resourceSecretRead(d *schema.ResourceData, kubeConfig interface{}) error {
 	return nil
 }
 
-func createSealedSecret(d *schema.ResourceData, kubeConfig KubeConfig) (string, error) {
+func createSealedSecret(d *schema.ResourceData, kubeConfig *KubeConfig) (string, error) {
 	secrets := d.Get("secrets").(map[string]interface {})
 	name := d.Get("name").(string)
 	namespace := d.Get("namespace").(string)
