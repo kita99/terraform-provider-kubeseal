@@ -29,7 +29,7 @@ func GenerateSecretManifest(name string, namespace string, secrets map[string]in
     secretManifestYAML := new(bytes.Buffer)
 
     paths := []string{
-        "secret.tmpl",
+        "../secret.tmpl",
 	}
 
     secretManifest := SecretManifest{
