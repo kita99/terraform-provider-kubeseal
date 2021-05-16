@@ -9,6 +9,21 @@ import (
     "text/template"
 )
 
+var (
+    secretManifestTemplate = `
+apiVersion: v1
+data:
+  {{- range $key, $value := .Secrets }}
+  {{ $key }}: {{ $value -}}
+  {{ end }}
+kind: Secret
+metadata:
+  creationTimestamp: null
+  name: {{ .Name }}
+  namespace: {{ .Namespace }}
+type: Opaque`
+)
+
 type SecretManifest struct {
     Name string
     Namespace string
@@ -28,17 +43,13 @@ func Log(message string) {
 func GenerateSecretManifest(name string, namespace string, secrets map[string]interface {}) (io.Reader, error) {
     secretManifestYAML := new(bytes.Buffer)
 
-    paths := []string{
-        "../secret.tmpl",
-	}
-
     secretManifest := SecretManifest{
         Name: name,
         Namespace: namespace,
         Secrets: secrets,
     }
 
-    t := template.Must(template.New("secret.tmpl").ParseFiles(paths...))
+    t := template.Must(template.New("secretManifestTemplate").Parse(secretManifestTemplate))
     err := t.Execute(secretManifestYAML, secretManifest)
 	if err != nil {
 		return nil, err
