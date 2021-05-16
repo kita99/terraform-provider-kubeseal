@@ -45,6 +45,11 @@ func resourceSecret() *schema.Resource {
 				Required:    true,
 				Description: "Namespace of the SealedSecrets controller in the cluster",
 			},
+            "manifest": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Whatever output",
+			},
 		},
 	}
 }
@@ -60,7 +65,7 @@ func resourceSecretRead(d *schema.ResourceData, kubeConfig interface{}) error {
 	utils.Log("Sealed secret has been created")
 
 	d.SetId(utils.SHA256(sealedSecretManifest))
-    d.State().Attributes["manifest"] = sealedSecretManifest
+    d.Set("manifest", sealedSecretManifest)
 
 	return nil
 }
