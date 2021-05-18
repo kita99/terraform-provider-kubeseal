@@ -57,6 +57,10 @@ func resourceSecret() *schema.Resource {
 func resourceSecretRead(d *schema.ResourceData, kubeConfig interface{}) error {
 	utils.Log("resourceSecretRead")
 
+    if !d.HasChange("secrets") {
+        return nil
+    }
+
     sealedSecretManifest, err := createSealedSecret(d, kubeConfig.(*KubeConfig))
     if err != nil {
         return err
