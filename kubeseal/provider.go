@@ -7,7 +7,7 @@ import (
     "path/filepath"
     "sync"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/kita99/terraform-provider-kubeseal/utils"
 
     "github.com/mitchellh/go-homedir"
@@ -28,7 +28,7 @@ func Provider() *schema.Provider {
 				Elem:        kubernetesResource(),
 			},
 		},
-		DataSourcesMap: map[string]*schema.Resource{
+		ResourcesMap: map[string]*schema.Resource{
 			"kubeseal_secret": resourceSecret(),
 		},
 		ConfigureFunc: providerConfigure,

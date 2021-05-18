@@ -1,10 +1,11 @@
 package kubeseal
 
 import (
+	b64 "encoding/base64"
 	"fmt"
-    b64 "encoding/base64"
+	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/kita99/terraform-provider-kubeseal/utils"
 	"github.com/kita99/terraform-provider-kubeseal/utils/kubeseal"
@@ -12,7 +13,10 @@ import (
 
 func resourceSecret() *schema.Resource {
 	return &schema.Resource{
+		Create:   resourceSecretCreate,
 		Read:   resourceSecretRead,
+		Update:   resourceSecretUpdate,
+		Delete:   resourceSecretDelete,
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -54,13 +58,7 @@ func resourceSecret() *schema.Resource {
 	}
 }
 
-func resourceSecretRead(d *schema.ResourceData, kubeConfig interface{}) error {
-	utils.Log("resourceSecretRead")
-
-    if !d.HasChange("secrets") {
-        return nil
-    }
-
+func resourceSecretCreate(d *schema.ResourceData, kubeConfig interface{}) error {
     sealedSecretManifest, err := createSealedSecret(d, kubeConfig.(*KubeConfig))
     if err != nil {
         return err
@@ -74,17 +72,45 @@ func resourceSecretRead(d *schema.ResourceData, kubeConfig interface{}) error {
 	return nil
 }
 
+func resourceSecretRead(d *schema.ResourceData, kubeConfig interface{}) error {
+	return nil
+}
+
+func resourceSecretUpdate(d *schema.ResourceData, kubeConfig interface{}) error {
+    if !d.HasChange("secrets") {
+        log.Printf("TOINE: Secrets remained the same skipping update")
+        return nil
+    }
+
+    sealedSecretManifest, err := createSealedSecret(d, kubeConfig.(*KubeConfig))
+    if err != nil {
+        return err
+    }
+
+	utils.Log("Sealed secret has been updated")
+
+	d.SetId(utils.SHA256(sealedSecretManifest))
+    d.Set("manifest", sealedSecretManifest)
+
+	return nil
+}
+
+func resourceSecretDelete(d *schema.ResourceData, kubeConfig interface{}) error {
+    return nil
+}
+
 func createSealedSecret(d *schema.ResourceData, kubeConfig *KubeConfig) (string, error) {
 	secrets := d.Get("secrets").(map[string]interface {})
 	name := d.Get("name").(string)
 	namespace := d.Get("namespace").(string)
 
+    secretsBase64 := map[string]interface{}{}
     for key, value := range secrets {
         strValue := fmt.Sprintf("%v", value) // rlly tho? jeez
-        secrets[key] = b64.StdEncoding.EncodeToString([]byte(strValue))
+        secretsBase64[key] = b64.StdEncoding.EncodeToString([]byte(strValue))
     }
 
-    secretManifest, err := utils.GenerateSecretManifest(name, namespace, secrets)
+    secretManifest, err := utils.GenerateSecretManifest(name, namespace, secretsBase64)
 	if err != nil {
 		return "", err
 	}
